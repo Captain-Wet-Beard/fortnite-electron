@@ -2,3 +2,5 @@ dist
 node_modules
 compiled
 arch/xbox-cloud-gaming
+.flatpak-builder
+repo

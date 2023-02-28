@@ -5,20 +5,7 @@ import { rpcLogin } from "./rpc"
 
 const userAgentWindows = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.53"
 
-const VAAPIWARN = `VA-API is not available! This might cause stuttering and poor quality. Please install it alongside vainfo. Refer to the README FAQ for more information. To disable this warning, pass the --no-vaapi-warning flag.
-
-If you're on Fedora, there's currently no way to fix this due to a copyright issue. This migth change soon, so please monitor the situation and see if there are any packages in the RPMFusion repository that can be used.`
-
-
 let vaapiAvailable = false
-
-try {
-    const vainfo = execSync("vainfo").toString() as string
-    vaapiAvailable = vainfo.includes("VA-API version")
-} catch (e) {
-    console.error(VAAPIWARN)
-}
-
 let rpcDisabled = false
 
 if (vaapiAvailable) {
@@ -35,10 +22,8 @@ const createWindow = () => {
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: false,
-            nativeWindowOpen: false,
         },
-        minWidth: 1280,
-        minHeight: 720,
+        fullscreen: true,
         title: "Xbox Cloud Gaming",
     })
 
@@ -56,6 +41,7 @@ const createWindow = () => {
         }
     } else {
         mainWindow.loadURL("https://www.xbox.com/play")
+        mainWindow.maximize();
     }
 }
 
@@ -116,9 +102,9 @@ app.on("browser-window-created", async (_, window) => {
         window.webContents.setUserAgent(userAgentWindows)
     }
 
-    const rpc = rpcDisabled ? null : await rpcLogin().catch(null)
+    const client = rpcDisabled ? null : await rpcLogin()
 
-    if (!rpc && !rpcDisabled) {
+    if (!client && !rpcDisabled) {
         console.error("Failed to login to Discord RPC")
     }
 
@@ -127,19 +113,6 @@ app.on("browser-window-created", async (_, window) => {
             window.webContents.insertCSS(/*css*/`
                 ::-webkit-scrollbar { display: none; }
             `)
-        
-        if (!vaapiAvailable && !process.argv.includes("--no-vaapi-warning"))
-            window.webContents.executeJavaScript(/*javascript*/`
-                const vaapiWarningDiv = document.createElement("div")
-                vaapiWarningDiv.style.backgroundColor = "white"
-                vaapiWarningDiv.style.color = "red"
-                vaapiWarningDiv.style.padding = "10px"
-                vaapiWarningDiv.style.fontFamily = "sans-serif"
-
-                vaapiWarningDiv.innerHTML = "${VAAPIWARN.replaceAll("\n", "<br>")}"
-
-                document.body.prepend(vaapiWarningDiv)
-            `).catch(() => null)
 
         
         if (!process.argv.includes("--dont-hide-pointer")) {
@@ -173,10 +146,12 @@ app.on("browser-window-created", async (_, window) => {
 
     injectCode()
 
-    rpc?.setActivity({
+    client?.on("ready", async () => {
+        client.user?.setActivity({
         details: "Playing",
         state: "Browsing the library",
         startTimestamp: Date.now()
+        })
     })
 
     window.on("page-title-updated", (e, title) => {
@@ -195,41 +170,47 @@ app.on("browser-window-created", async (_, window) => {
             if (title.includes("  ")) {
                 window.setFullScreen(true)
                 state = "Playing " + gameName
-            } else {
-                window.setFullScreen(false)
-                state = "Viewing " + gameName
             }
 
 
-            rpc?.setActivity({
+            client?.on("ready", async () => {
+                client.user?.setActivity({
                 details: "Playing",
                 state,
                 largeImageKey: "xbox",
                 largeImageText: "Xbox Cloud Gaming on Linux (Electron)",
                 startTimestamp: Date.now()
+                })
             })
         } else {
-            window.setFullScreen(false)
-
-            rpc?.setActivity({
-                details: "Playing",
-                state: "Browsing the library",
-                largeImageKey: "xbox",
-                largeImageText: "Xbox Cloud Gaming on Linux (Electron)",
-                startTimestamp: Date.now()
+            client?.on("ready", async () => {
+                client.user?.setActivity({
+                    details: "Playing",
+                    state: "Browsing the library",
+                    largeImageKey: "xbox",
+                    largeImageText: "Xbox Cloud Gaming on Linux (Electron)",
+                    startTimestamp: Date.now()
+                })
             })
         }
-    })
 
+    })
+    client?.login();
     app.on("will-quit", async () => {
         globalShortcut.unregisterAll()
-        await rpc?.clearActivity()
+        client?.on("ready", async () => {
+            await client.user?.clearActivity()
+        })
     })
 
     app.on("window-all-closed", async () => {
         if (process.platform !== "darwin") {
-            await rpc?.clearActivity()
+            client?.on("ready", async () => {
+                await client.user?.clearActivity()
+            })
             app.quit()
         }
     })
 })
+
+

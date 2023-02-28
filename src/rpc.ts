@@ -1,9 +1,10 @@
-import RPC from "discord-rpc"
+import{Client} from "@xhayper/discord-rpc"
 
-const clientId = "1024607566648578058"
+const client = new Client({
+    clientId: "1024607566648578058",
+    transport: { type:"ipc" }
+});
 
-const rpc = new RPC.Client({ transport: "ipc" })
-
-export const rpcLogin = () => new Promise<RPC.Client>((resolve, reject) => {
-    rpc.login({ clientId }).then(resolve).catch(reject)
+export const rpcLogin = () => new Promise<Client>((reject) => {
+    client.login().catch(reject)
 })
