@@ -1,23 +1,27 @@
-import { execSync } from "node:child_process"
-import { app, globalShortcut, BrowserWindow, shell, session } from "electron"
+import { app, globalShortcut, BrowserWindow, session, screen } from "electron"
 import path from "path"
 import { rpcLogin } from "./rpc"
 
 const userAgentWindows = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.53"
 
-let vaapiAvailable = false
 let rpcDisabled = false
 
-if (vaapiAvailable) {
-    app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder")
-    app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode")
-    app.commandLine.appendSwitch("enable-accelerated-video")
-    app.commandLine.appendSwitch("ignore-gpu-blacklist")
-    app.commandLine.appendSwitch("enable-native-gpu-memory-buffers")
-    app.commandLine.appendSwitch("enable-gpu-rasterization")
-}
+app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder")
+app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode")
+app.commandLine.appendSwitch("enable-accelerated-video")
+app.commandLine.appendSwitch("ignore-gpu-blacklist")
+app.commandLine.appendSwitch("enable-native-gpu-memory-buffers")
+app.commandLine.appendSwitch("enable-gpu-rasterization")
 
-const createWindow = () => {
+
+
+app.whenReady().then(() => {
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    const x = Math.round((width * 1860)/1920)
+    const y = Math.round((height * 23)/1080)
+    const widthOverlay = Math.round((width * 40)/1920)
+    const heightOverlay = Math.round((height * 40)/1080)
+
     const mainWindow = new BrowserWindow({
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
@@ -40,12 +44,25 @@ const createWindow = () => {
             rpcDisabled = true
         }
     } else {
+        mainWindow.setBackgroundColor("#1A1D1F")
         mainWindow.loadURL("https://www.xbox.com/play")
-        mainWindow.maximize();
     }
-}
 
-app.whenReady().then(() => {
+    const overlayWindow = new BrowserWindow({
+        x: x ,
+        y: y ,
+        width: widthOverlay ,
+        height: heightOverlay ,
+        frame: false,
+        transparent: true,
+        resizable:false,
+        parent: mainWindow ,
+    })
+
+    overlayWindow.loadURL("data:text/html,<input type='image' width='30' src='https://www.freeiconspng.com/uploads/silver-close-button-png-15.png' onclick='window.close()'/>")
+
+    mainWindow.focus()
+    
     if (!process.argv.includes("--normal-user-agent")) {
         const filter = {
             urls: ["https://xbox.com/*"]
@@ -57,55 +74,16 @@ app.whenReady().then(() => {
         })
     }
 
-    createWindow()
-
-    app.on("activate", () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow()
-        }
-    })
-
-    globalShortcut.register("F11", () => {
-        const win = BrowserWindow.getAllWindows()[0]
-
-        win.setFullScreen(!win.isFullScreen())
-    })
-
-    globalShortcut.register("F1", () =>
-        shell.openExternal(
-            "https://github.com/marzeq/xbox-cloud-gaming-electron"
-        )
-    )
-
-    globalShortcut.register("F12", () => {
-        BrowserWindow.getAllWindows()[0].webContents.openDevTools()
-    })
-
-    globalShortcut.register("Control+Shift+c", () => {
-        BrowserWindow.getAllWindows()[0].webContents.toggleDevTools()
-    })
-
-    globalShortcut.register("Control+Shift+i", () => {
-        BrowserWindow.getAllWindows()[0].webContents.toggleDevTools()
-    })
-
-    globalShortcut.register("Control+q", () => {
+    overlayWindow.on("closed", async () => {
         app.quit()
     })
 })
 
 app.on("browser-window-created", async (_, window) => {
-    window.setBackgroundColor("#1A1D1F")
     window.setMenu(null)
     
     if (!process.argv.includes("--normal-user-agent")) {
         window.webContents.setUserAgent(userAgentWindows)
-    }
-
-    const client = rpcDisabled ? null : await rpcLogin()
-
-    if (!client && !rpcDisabled) {
-        console.error("Failed to login to Discord RPC")
     }
 
     const injectCode = () => {
@@ -145,6 +123,13 @@ app.on("browser-window-created", async (_, window) => {
     }
 
     injectCode()
+    
+    const client = rpcDisabled ? null : await rpcLogin()
+
+    if (!client && !rpcDisabled) {
+        console.error("Failed to login to Discord RPC")
+    }
+
 
     client?.on("ready", async () => {
         client.user?.setActivity({
