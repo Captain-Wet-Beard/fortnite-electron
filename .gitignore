@@ -4,3 +4,5 @@ compiled
 arch/xbox-cloud-gaming
 .flatpak-builder
 repo
+io.github.mandruis7.xbox-cloud-gaming-electron.*
+generated-sources.json

@@ -16,18 +16,11 @@ app.commandLine.appendSwitch("enable-gpu-rasterization")
 
 
 app.whenReady().then(() => {
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    const x = Math.round((width * 1860)/1920)
-    const y = Math.round((height * 23)/1080)
-    const widthOverlay = Math.round((width * 40)/1920)
-    const heightOverlay = Math.round((height * 40)/1080)
-
     const mainWindow = new BrowserWindow({
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: false,
         },
-        fullscreen: true,
         title: "Xbox Cloud Gaming",
     })
 
@@ -46,20 +39,9 @@ app.whenReady().then(() => {
     } else {
         mainWindow.setBackgroundColor("#1A1D1F")
         mainWindow.loadURL("https://www.xbox.com/play")
+        mainWindow.maximize();
     }
 
-    const overlayWindow = new BrowserWindow({
-        x: x ,
-        y: y ,
-        width: widthOverlay ,
-        height: heightOverlay ,
-        frame: false,
-        transparent: true,
-        resizable:false,
-        parent: mainWindow ,
-    })
-
-    overlayWindow.loadURL("data:text/html,<input type='image' width='30' src='https://www.freeiconspng.com/uploads/silver-close-button-png-15.png' onclick='window.close()'/>")
 
     mainWindow.focus()
     
@@ -74,8 +56,9 @@ app.whenReady().then(() => {
         })
     }
 
-    overlayWindow.on("closed", async () => {
-        app.quit()
+    globalShortcut.register("F11", () => {
+        const win = BrowserWindow.getAllWindows()[0]
+        win.setFullScreen(!win.isFullScreen())
     })
 })
 
