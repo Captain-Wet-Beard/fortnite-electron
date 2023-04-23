@@ -21,6 +21,8 @@ app.whenReady().then(() => {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: false,
         },
+        width: 1280,
+        height: 800,
         title: "Xbox Cloud Gaming",
     })
 
@@ -39,7 +41,7 @@ app.whenReady().then(() => {
     } else {
         mainWindow.setBackgroundColor("#1A1D1F")
         mainWindow.loadURL("https://www.xbox.com/play")
-        mainWindow.maximize();
+        mainWindow.maximize()
     }
 
 
