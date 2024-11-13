@@ -27,8 +27,7 @@ app.whenReady().then(() => {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: false,
         },
-        fullscreen: true,
-        title: "Xbox Cloud Gaming",
+        title: "Fortnite Electron",
     })
 
     if (process.argv.includes("--no-rpc")) rpcDisabled = true
