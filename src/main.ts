@@ -73,8 +73,9 @@ app.whenReady().then(() => {
         })
     }
 
-    overlayWindow.on("closed", async () => {
-        app.quit()
+    globalShortcut.register("F11", () => {
+        const win = BrowserWindow.getAllWindows()[0]
+        win.setFullScreen(!win.isFullScreen())
     })
 })
 
