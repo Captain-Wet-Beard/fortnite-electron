@@ -1,8 +1,8 @@
 {
-  "name": "xbox-cloud-gaming-electron",
-  "productName": "Xbox Cloud Gaming",
+  "name": "fornite-electron",
+  "productName": "Fortnite Electron",
   "version": "1.0.20",
-  "description": "A Linux desktop web app for Xbox Cloud Gaming",
+  "description": "A Linux desktop web app for Fortnite powered by Xbox Cloud Gaming",
   "main": "compiled/main.js",
   "scripts": {
     "start": "tsc && electron .",
@@ -14,9 +14,7 @@
     "linux": {
       "target": [
         "zip",
-        "deb",
         "AppImage",
-        "rpm",
         "pacman"
       ],
       "desktop": {
@@ -27,12 +25,12 @@
       "artifactName": "${name}_${version}.${ext}"
     }
   },
-  "repository": "https://github.com/marzeq/xbox-cloud-gaming-electron",
+  "repository": "hhttps://github.com/Captain-Wet-Beard/fortnite-electron",
   "keywords": [
     "Electron",
     "xbox",
     "xbox-cloud-gaming",
-    "xboxcloudgaming"
+    "fortnite"
   ],
   "author": "marzeq <marzeqmarzeq@gmail.com>",
   "license": "GPL-3.0",

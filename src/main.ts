@@ -40,7 +40,7 @@ app.whenReady().then(() => {
         }
     } else {
         mainWindow.setBackgroundColor("#1A1D1F")
-        mainWindow.loadURL("https://www.xbox.com/play")
+        mainWindow.loadURL("https://www.xbox.com/en-US/play/launch/fortnite/BT5P2X999VH2")
         mainWindow.maximize()
     }
 
